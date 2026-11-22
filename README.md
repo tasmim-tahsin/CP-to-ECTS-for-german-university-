@@ -3,6 +3,7 @@
 A minimal, responsive calculator that converts course credit points (CP) into ECTS.
 
 **Live Link**
+https://cptoects.vercel.app/
 
 
 ## Formula
@@ -44,7 +45,7 @@ Use the **Use example** button to fill in sample values, or **Clear** to start o
 Download `cp-to-ects-calculator.html` and open it in any modern browser. No server needed.
 
 ```bash
-git clone https://github.com/tasmim-tahsin/CP-to-ECTS-for-german-university.git
+git clone https://github.com/tasmim-tahsin/CP-to-ECTS-for-german-university-.git
 cd CP-to-ECTS-for-german-university
 open cp-to-ects-calculator.html
 ```
@@ -62,4 +63,4 @@ This tool gives an estimate based on a standard proportional formula. Universiti
 
 ## Author
 
-Made by **Tahsin**.
+Made by **Tahsin**

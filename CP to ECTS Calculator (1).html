@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CP to ECTS Calculator</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f5f7f6; --surface:#ffffff; --text:#14201c; --muted:#5c6b65; --line:#d9e0dd;
+  --accent:#0f6b54; --accent-text:#ffffff; --result-bg:#e4f2ed; --err:#b3261e;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1512; --surface:#16201c; --text:#e8f0ec; --muted:#95a59d; --line:#2a3832;
+    --accent:#4cc3a0; --accent-text:#06231a; --result-bg:#16302a; --err:#ff8a80;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1512; --surface:#16201c; --text:#e8f0ec; --muted:#95a59d; --line:#2a3832;
+  --accent:#4cc3a0; --accent-text:#06231a; --result-bg:#16302a; --err:#ff8a80;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;min-height:100vh;background:var(--bg);color:var(--text);
+  font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  display:flex;justify-content:center;align-items:flex-start;padding:24px 16px;
+}
+main{width:100%;max-width:440px}
+h1{font-size:1.4rem;margin:8px 0 4px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 20px;font-size:.95rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.field{margin-bottom:16px}
+label{display:block;font-weight:600;font-size:.92rem;margin-bottom:6px}
+.hint{color:var(--muted);font-size:.82rem;font-weight:400}
+input{
+  width:100%;font:inherit;font-size:1.05rem;padding:12px 14px;color:var(--text);
+  background:var(--bg);border:1px solid var(--line);border-radius:10px;
+}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+input[aria-invalid="true"]{border-color:var(--err)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:380px){.row{grid-template-columns:1fr}}
+.result{
+  margin-top:8px;background:var(--result-bg);border-radius:12px;padding:18px;text-align:center;
+}
+.result .num{font-size:2.6rem;font-weight:700;line-height:1.1;color:var(--accent);font-variant-numeric:tabular-nums}
+.result .lbl{color:var(--muted);font-size:.9rem}
+.formula{color:var(--muted);font-size:.82rem;margin-top:10px;word-break:break-word}
+.msg{color:var(--err);font-size:.85rem;min-height:1.2em;margin:0 0 8px}
+.actions{display:flex;gap:10px;margin-top:16px}
+button{
+  flex:1;font:inherit;font-weight:600;padding:12px;border-radius:10px;cursor:pointer;
+  border:1px solid var(--line);background:var(--surface);color:var(--text);
+}
+button.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.note{color:var(--muted);font-size:.8rem;margin:16px 4px 0;text-align:center}
+footer{color:var(--muted);font-size:.85rem;text-align:center;margin:20px 0 8px;padding-top:16px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<main>
+  <h1>CP to ECTS calculator</h1>
+  <p class="sub">Convert your course credit points into ECTS.</p>
+
+  <div class="card">
+    <div class="field">
+      <label for="cp">Credit points of the course (CP)</label>
+      <input id="cp" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 3">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="years">Degree length <span class="hint">(years)</span></label>
+        <input id="years" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 4">
+      </div>
+      <div class="field">
+        <label for="total">Total credits <span class="hint">(CP)</span></label>
+        <input id="total" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 120">
+      </div>
+    </div>
+    <p class="msg" id="msg" role="alert"></p>
+
+    <div class="result" aria-live="polite">
+      <div class="num" id="out">–</div>
+      <div class="lbl">ECTS</div>
+      <div class="formula" id="formula">CP × (60 × years) ÷ total credits</div>
+    </div>
+
+    <div class="actions">
+      <button type="button" id="reset">Clear</button>
+      <button type="button" class="primary" id="example">Use example</button>
+    </div>
+  </div>
+  <p class="note">Based on the FU Berlin formula: ECTS = CP × (60 × years) ÷ total credits of the degree.</p>
+  <footer>Made by Tahsin</footer>
+</main>
+
+<script>
+(function(){
+  var cp=document.getElementById('cp'), yrs=document.getElementById('years'),
+      tot=document.getElementById('total'), out=document.getElementById('out'),
+      msg=document.getElementById('msg'), formula=document.getElementById('formula');
+  var def='CP × (60 × years) ÷ total credits';
+
+  function fmt(n){
+    return (Math.round(n*100)/100).toLocaleString('en-US',{maximumFractionDigits:2});
+  }
+  function calc(){
+    var a=cp.value, b=yrs.value, c=tot.value;
+    [cp,yrs,tot].forEach(function(i){i.removeAttribute('aria-invalid')});
+    msg.textContent='';
+    if(a===''||b===''||c===''){out.textContent='–';formula.textContent=def;return;}
+    var x=parseFloat(a), y=parseFloat(b), z=parseFloat(c);
+    if(isNaN(x)||isNaN(y)||isNaN(z)||x<0||y<=0||z<=0){
+      out.textContent='–';formula.textContent=def;
+      msg.textContent='Enter positive numbers. Years and total credits must be above 0.';
+      [[cp,x<0||isNaN(x)],[yrs,y<=0||isNaN(y)],[tot,z<=0||isNaN(z)]].forEach(function(p){
+        if(p[1])p[0].setAttribute('aria-invalid','true');
+      });
+      return;
+    }
+    var r=x*(60*y)/z;
+    out.textContent=fmt(r);
+    formula.textContent=fmt(x)+' × (60 × '+fmt(y)+') ÷ '+fmt(z)+' = '+fmt(r);
+  }
+  [cp,yrs,tot].forEach(function(i){i.addEventListener('input',calc)});
+  document.getElementById('reset').addEventListener('click',function(){
+    cp.value='';yrs.value='';tot.value='';calc();cp.focus();
+  });
+  document.getElementById('example').addEventListener('click',function(){
+    cp.value=3;yrs.value=4;tot.value=120;calc();
+  });
+})();
+</script>
+</body>
+</html>
